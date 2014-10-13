@@ -35,28 +35,28 @@
 
     root.init = function() {
         var i;
-	    Bitwig.getMidiInPort(0).setMidiCallback(onMidi);
-	    Bitwig.getMidiInPort(1).setMidiCallback(onMidiDaw);
+        Bitwig.getMidiInPort(0).setMidiCallback(onMidi);
+        Bitwig.getMidiInPort(1).setMidiCallback(onMidiDaw);
         Bitwig.getMidiInPort(0).createNoteInput('', '??????')
             .setShouldConsumeEvents(false);
 
-	    // Map CC 20 - 27 to device parameters
+        // Map CC 20 - 27 to device parameters
         var cursorTrack = Bitwig.createArrangerCursorTrack(3, 0);
-	    primaryInstrument = cursorTrack.getPrimaryInstrument();
+        primaryInstrument = cursorTrack.getPrimaryInstrument();
 
-	    for (i = 0; i < 8; i++) {
-		    var p = primaryInstrument.getMacro(i).getAmount();
-		    p.setIndication(true);
-	    }
+        for (i = 0; i < 8; i++) {
+            var p = primaryInstrument.getMacro(i).getAmount();
+            p.setIndication(true);
+        }
 
-	    // Make the rest freely mappable
-	    userControls = Bitwig.createUserControlsSection(HIGHEST_CC - LOWEST_CC + 1 - 8);
+        // Make the rest freely mappable
+        userControls = Bitwig.createUserControlsSection(HIGHEST_CC - LOWEST_CC + 1 - 8);
 
-	    for (i = LOWEST_CC; i < HIGHEST_CC; i++) {
-		    if (i < DEVICE_START_CC || i > DEVICE_END_CC) {
-			    userControls.getControl(userIndexFromCC(i)).setLabel('CC' + i);
-		    }
-	    }
+        for (i = LOWEST_CC; i < HIGHEST_CC; i++) {
+            if (i < DEVICE_START_CC || i > DEVICE_END_CC) {
+                userControls.getControl(userIndexFromCC(i)).setLabel('CC' + i);
+            }
+        }
 
         var dawMidiOut = Bitwig.getMidiOutPort(1);
         transportController = new root.controller.TransportController(dawMidiOut);
@@ -74,20 +74,20 @@
     };
 
     function userIndexFromCC(cc) {
-	    if (cc > DEVICE_END_CC) {
-		    return cc - LOWEST_CC - 8;
-	    }
-	    return cc - LOWEST_CC;
+        if (cc > DEVICE_END_CC) {
+            return cc - LOWEST_CC - 8;
+        }
+        return cc - LOWEST_CC;
     }
 
     function onMidi(s, d1, d2) {
-	    if ((s & 0xF0) === 0xB0) {
-		    if (d1 >= DEVICE_START_CC && d1 <= DEVICE_END_CC) {
-			    primaryInstrument.getMacro(d1 - DEVICE_START_CC).getAmount().set(d2, 128);
-		    }  else if (d1 >= LOWEST_CC && d1 <= HIGHEST_CC) {
-			    userControls.getControl(userIndexFromCC(d1)).set(d2, 128);
-		    }
-	    }
+        if ((s & 0xF0) === 0xB0) {
+            if (d1 >= DEVICE_START_CC && d1 <= DEVICE_END_CC) {
+                primaryInstrument.getMacro(d1 - DEVICE_START_CC).getAmount().set(d2, 128);
+            }  else if (d1 >= LOWEST_CC && d1 <= HIGHEST_CC) {
+                userControls.getControl(userIndexFromCC(d1)).set(d2, 128);
+            }
+        }
     }
 
     function onMidiDaw(s, d1, d2) {
