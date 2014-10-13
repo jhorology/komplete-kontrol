@@ -23,19 +23,19 @@
     };
 
     TransportController.prototype = {
-        
+
         initialize: function() {
             var context  = this,
                 midiOut = context.midiOut,
                 transport = context.transport;
-            
+
             // transport buttons on daw port.
             this.createElement(SID_TRANSPORT_LOOP, {
                 on: function() {
                     transport.toggleLoop();
                 }
             });
-                                
+
             this.createElement(SID_TRANSPORT_REWIND, {
                 on: function() {
                     midiOut.sendMidi(0x90, SID_TRANSPORT_REWIND, 127);

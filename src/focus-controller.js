@@ -1,7 +1,7 @@
 (function(root, Bitwig) {
     'use strict';
 
-        // CC# for cursor buttons
+    // CC# for cursor buttons
     var MAX_CHARS = 28,
         SID_START = 20,
         SID_NAV_LEFT = 20,
@@ -27,7 +27,7 @@
             var track = this.track,
                 device = this.device,
                 status = this.status;
-            
+
             track.addNameObserver(MAX_CHARS, '', function(value) {
                 status.track = value;
                 status.hasChanged = true;

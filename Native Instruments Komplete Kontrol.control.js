@@ -28,19 +28,19 @@
     };
 
     TransportController.prototype = {
-        
+
         initialize: function() {
             var context  = this,
                 midiOut = context.midiOut,
                 transport = context.transport;
-            
+
             // transport buttons on daw port.
             this.createElement(SID_TRANSPORT_LOOP, {
                 on: function() {
                     transport.toggleLoop();
                 }
             });
-                                
+
             this.createElement(SID_TRANSPORT_REWIND, {
                 on: function() {
                     midiOut.sendMidi(0x90, SID_TRANSPORT_REWIND, 127);
@@ -164,7 +164,7 @@
 (function(root, Bitwig) {
     'use strict';
 
-        // CC# for cursor buttons
+    // CC# for cursor buttons
     var MAX_CHARS = 28,
         SID_START = 20,
         SID_NAV_LEFT = 20,
@@ -190,7 +190,7 @@
             var track = this.track,
                 device = this.device,
                 status = this.status;
-            
+
             track.addNameObserver(MAX_CHARS, '', function(value) {
                 status.track = value;
                 status.hasChanged = true;
