@@ -78,6 +78,8 @@
             this.elements[cc - SID_START] = button;
         },
 
+        // this ex message only work in Ableton Live. why ?
+        // NI guys must have open mind.
         createStatuExMsg: function() {
             var exmsg = SYSEX_HEADER + '00 ',
                 status = this.status;
@@ -88,6 +90,7 @@
                 exmsg += SYSEX_SEP;
                 exmsg += encode(status.device);
                 exmsg += SYSEX_SEP;
+                // cheat code, this id must spcify Komplete Kontrol instance,
                 var id = (101 + status.trackPosition).toString().substring(1);
                 exmsg += encode(id);
             }
