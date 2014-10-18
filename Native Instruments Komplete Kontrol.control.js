@@ -1488,7 +1488,6 @@
 
             this.createElement(SID_TRANSPORT_PLAY, {
                 on: function() {
-                    // root.println('## play transport:' + transport);
                     transport.play();
                 }
             });
@@ -1736,14 +1735,15 @@
         this.device = device;
         this.elements = [];
         this.elements.length = HIGHEST_CC - LOWEST_CC + 1;
+        this.initialize();
     };
 
     DeviceController.prototype = {
         initialize: function() {
-            var elements = this.elemsnts,
+            var elements = this.elements,
                 device = this.device,
-                encRange = _.range(ENCODER_START_CC, ENCODER_END_CC),
-                userRange = _.difference(_.range(LOWEST_CC, HIGHEST_CC), encRange),
+                encRange = _.range(ENCODER_START_CC, ENCODER_END_CC + 1),
+                userRange = _.difference(_.range(LOWEST_CC, HIGHEST_CC + 1), encRange),
                 userControls = Bitwig.createUserControls(userRange.length),
                 index = 0;
 
@@ -1755,13 +1755,13 @@
             });
 
             _.each(encRange, function(cc) {
-                var macro = device.getMacro(cc = ENCODER_START_CC).getAmount();
+                var macro = device.getMacro(cc - ENCODER_START_CC).getAmount();
                 macro.setIndication(true);
                 elements[cc - LOWEST_CC] = macro;
             });
         },
 
-        onMidi: function(s, d1, d2) {
+        onMidi0: function(s, d1, d2) {
             if (s === 0xB0) {this.onMidiCC(d1, d2);}
         },
 
