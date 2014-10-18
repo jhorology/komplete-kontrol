@@ -67,7 +67,7 @@
 
             this.createElement(SID_TRANSPORT_PLAY, {
                 on: function() {
-                    root.println('## play transport:' + transport);
+                    // root.println('## play transport:' + transport);
                     transport.play();
                 }
             });

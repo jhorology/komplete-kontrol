@@ -1488,7 +1488,7 @@
 
             this.createElement(SID_TRANSPORT_PLAY, {
                 on: function() {
-                    root.println('## play transport:' + transport);
+                    // root.println('## play transport:' + transport);
                     transport.play();
                 }
             });
@@ -1648,10 +1648,10 @@
         flush: function() {
             var status = this.status;
             if(status.hasChanged) {
-                root.println('## flush track:[' + status.track + 
-                             '] position:[' + status.trackPosition + 
-                             '] device:[' + status.device + 
-                             '] id:[' + status.id + ']');
+                // root.println('## flush track:[' + status.track + 
+                //              '] position:[' + status.trackPosition + 
+                //              '] device:[' + status.device + 
+                //              '] id:[' + status.id + ']');
                 this.midiOut.sendSysex(this.createStatuExMsg());
                 status.hasChanged = false;
             }
@@ -1696,7 +1696,7 @@
                 }
             }
             exmsg += SYSEX_EOX;
-            root.println('## ex:[' + exmsg + ']');
+            // root.println('## ex:[' + exmsg + ']');
             return exmsg;
         }
     };
