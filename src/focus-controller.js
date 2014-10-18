@@ -1,7 +1,6 @@
-(function(root, Bitwig) {
+(function(root, Bitwig, _) {
     'use strict';
 
-    // CC# for cursor buttons
     var MAX_CHARS = 28,
         SID_START = 20,
         SID_NAV_LEFT = 20,
@@ -13,12 +12,13 @@
         SYSEX_SEP = '19 ',
         SYSEX_EOX = 'f7';
 
-    var FocusController = function(midiOut, cursorTrack, primaryDevice) {
+    var FocusController = function(midiOut, cursorTrack, cursorDevice) {
         this.midiOut = midiOut;
         this.track = cursorTrack;
-        this.device = primaryDevice;
+        this.device = cursorDevice;
         this.status = {};
         this.elements = [];
+        this.elements.length = SID_END - SID_START + 1;
         this.initialize();
     };
 
@@ -27,7 +27,7 @@
             var track = this.track,
                 device = this.device,
                 status = this.status;
-
+            
             track.addNameObserver(MAX_CHARS, '', function(value) {
                 status.track = value;
                 status.hasChanged = true;
@@ -43,6 +43,16 @@
                 status.hasChanged = true;
             });
 
+            // Komplete Kontrol MIKBnn paramater must map top of common paramater.
+            // MIKBnn  nn = id of Komplete Kontrol instance.
+            device.getCommonParameter(0).addNameObserver(MAX_CHARS, '', function(value) {
+                var device = status.device;
+                status.id = (device && device.lastIndexOf(PLUGIN_PREFIX) === 0 &&
+                             value.lastIndexOf(PARAM_PREFIX) === 0) ?
+                    value.substring(PARAM_PREFIX.length) : undefined;
+                status.hasChanged = true;
+            });
+
             this.createElement(SID_NAV_LEFT, {
                 on: function() {track.selectPrevious();}
             });
@@ -52,7 +62,22 @@
             });
         },
 
-        onMidi: function(s, d1, d2) {
+        flush: function() {
+            var status = this.status;
+            if(status.hasChanged) {
+                root.println('## flush track:[' + status.track + 
+                             '] position:[' + status.trackPosition + 
+                             '] device:[' + status.device + 
+                             '] id:[' + status.id + ']');
+                this.midiOut.sendSysex(this.createStatuExMsg());
+                status.hasChanged = false;
+            }
+        },
+
+        exit: function() {
+        },
+
+        onMidi1: function(s, d1, d2) {
             if (s === 0xB0) {this.onMidiCC(d1, d2);}
         },
 
@@ -62,17 +87,6 @@
             btn && (on ? (btn.on && btn.on.call(this)) : (btn.off && btn.off.call(this)));
         },
 
-        flush: function() {
-            var status = this.status;
-            if(status.hasChanged) {
-                root.println('## flush track:[' + status.track + '] position[' + status.trackPosition + '] device[' + status.device + ']');
-                this.midiOut.sendSysex(this.createStatuExMsg());
-                status.hasChanged = false;
-            }
-        },
-
-        exit: function() {
-        },
 
         createElement: function(cc, button) {
             this.elements[cc - SID_START] = button;
@@ -83,16 +97,20 @@
         createStatuExMsg: function() {
             var exmsg = SYSEX_HEADER + '00 ',
                 status = this.status;
+            // add track name
             exmsg += encode(status.track);
+            // add track position
             exmsg += SYSEX_SEP;
             exmsg += encode(status.trackPosition.toString());
+            // add device name
             if (status.device && status.device.length > 0) {
                 exmsg += SYSEX_SEP;
                 exmsg += encode(status.device);
-                exmsg += SYSEX_SEP;
-                // cheat code, this id must spcify Komplete Kontrol instance,
-                var id = (101 + status.trackPosition).toString().substring(1);
-                exmsg += encode(id);
+                // add komplete kontrol instance id.
+                if (status.id) {
+                    exmsg += SYSEX_SEP;
+                    exmsg += encode(status.id);
+                }
             }
             exmsg += SYSEX_EOX;
             root.println('## ex:[' + exmsg + ']');
@@ -115,8 +133,7 @@
         return str;
     }
 
-
     // export
-    root.controller || (root.controller = {});
-    root.controller.FocusController = FocusController;
-}(this, host));
+    root.KompleteKontrol || (root.KompleteKontrol = {});
+    root.KompleteKontrol.FocusController = FocusController;
+}(this, host, _));

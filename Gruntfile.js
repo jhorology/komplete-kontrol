@@ -19,9 +19,11 @@ module.exports = function (grunt) {
         concat: {
             files: {
                 src: [
+                    'node_modules/underscore/underscore.js',
                     'src/directive.js',
                     'src/transport-controller.js',
                     'src/focus-controller.js',
+                    'src/device-controller.js',
                     'src/main.js'
                 ],
                 dest: '<%= distJs%>'

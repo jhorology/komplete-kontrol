@@ -1,4 +1,4 @@
-(function(root, Bitwig) {
+(function(root, Bitwig, _) {
     'use strict';
 
     // switch element
@@ -16,6 +16,7 @@
         this.midiOut = midiOut;
         this.transport = Bitwig.createTransport();
         this.elements = [];
+        this.elements.length = SID_END - SID_START + 1;
         this.isPlaying = false;
         this.ffwOn = false;
         this.rwdOn = false;
@@ -93,7 +94,13 @@
 
         },
 
-        onMidi: function(s, d1, d2) {
+        flush: function() {
+        },
+
+        exit: function() {
+        },
+
+        onMidi1: function(s, d1, d2) {
             if (s === 0x80) {this.onMidiNote(d1, 0);}
             else if (s === 0x90) {this.onMidiNote(d1, d2);}
         },
@@ -101,13 +108,7 @@
         onMidiNote: function(d1, d2) {
             var btn =  (d1 >= SID_START && d1 <= SID_END) ? this.elements[d1 - SID_START] : undefined,
                 on = d2 !== 0;
-            btn && (on ? (btn.on && btn.on()) : (btn.off && btn.off()));
-        },
-
-        flush: function() {
-        },
-
-        exit: function() {
+            btn && (on ? (btn.on && btn.on.call(this)) : (btn.off && btn.off.call(this)));
         },
 
         createElement: function(note, button) {
@@ -115,10 +116,11 @@
         },
 
         fastForwardMomentary: function() {
+            var context = this,
+                transport = this.transport;
             arguments.length > 0 && (this.ffwOn = arguments[0]);
             if (this.ffwOn) {
-                this.considerPlaying(this.transport, this.transport.fastForward);
-                var context = this;
+                this.considerPlaying(transport, transport.fastForward);
                 Bitwig.scheduleTask(function() {
                     context.fastForwardMomentary();
                 }, null, 100);
@@ -126,10 +128,11 @@
         },
 
         rewindMomentary: function() {
+            var context = this,
+                transport = this.transport;
             arguments.length > 0 && (this.rwdOn = arguments[0]);
             if (this.rwdOn) {
-                this.considerPlaying(this.transport, this.transport.rewind);
-                var context = this;
+                this.considerPlaying(transport, transport.rewind);
                 Bitwig.scheduleTask(function() {
                     context.rewindMomentary();
                 }, null, 100);
@@ -137,12 +140,13 @@
         },
 
         considerPlaying: function(context, func) {
+            var transport = this.transport;
             if (this.isPlaying) {
-                this.transport.stop();
+                transport.stop();
                 func.call(context);
                 var thisContext = this;
                 Bitwig.scheduleTask(function() {
-                    thisContext.transport.play();
+                    transport.play();
                 }, null, 50);
             } else {
                 func.call(context);
@@ -151,7 +155,7 @@
     };
 
     // export
-    root.controller || (root.controller = {});
-    root.controller.TransportController = TransportController;
-
-}(this, host));
+    // export
+    root.KompleteKontrol || (root.KompleteKontrol = {});
+    root.KompleteKontrol.TransportController = TransportController;
+}(this, host, _));
