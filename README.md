@@ -8,7 +8,7 @@ Bitwig Studio controller script for Native Instruments Komplete Kontrol.
 ```
 
 ### Integration Test
-Modify Grunt.js to suit your environment.
+Modify Gruntfile.js to suit your environment.
 
 ```
     grunt integration-test
