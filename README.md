@@ -15,5 +15,5 @@ Modify Grunt.js to suit your environment.
 ```
 
 ### Hack by yourself
-Is host Ableton ?  Yes.
-Is host AutoFocus ?  Yes.
+- Is host Ableton ?  Yes.
+- Is host AutoFocus ?  Yes.
