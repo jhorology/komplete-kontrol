@@ -1,6 +1,8 @@
 (function(root, Bitwig, _) {
     'use strict';
-
+    // imports
+    var utils = root.KompleteKontrol.utils;
+    
     // constants
     var LOWEST_CC = 1,
         ENCODER_START_CC = 14,
@@ -45,8 +47,7 @@
 
         onMidiCC: function(d1, d2) {
             var elements = this.elements,
-                index = d1 - LOWEST_CC,
-                inRange = index >= 0 && index < elements.length;
+                index = d1 - LOWEST_CC;
             index >= 0 && index < elements.length && elements[index].set(d2, 128); 
         },
 

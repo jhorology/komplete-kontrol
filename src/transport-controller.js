@@ -1,6 +1,9 @@
 (function(root, Bitwig, _) {
     'use strict';
 
+    // imports
+    var utils = root.KompleteKontrol.utils;
+
     // switch element
     var SID_START = 86,
         SID_TRANSPORT_LOOP = 86,

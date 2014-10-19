@@ -1422,6 +1422,54 @@
 (function(root, Bitwig, _) {
     'use strict';
 
+    var SYSEX_HEADER = 'f0 00 00 66 14 12 ',
+        SYSEX_SEP = '19 ',
+        SYSEX_EOX = 'f7',
+        MAX_CHARS = 28;
+    
+    
+    var utils = {
+        statusMessage: function(ary) {
+            var items = _.map(ary, utils.encode);
+            return SYSEX_HEADER + '00 ' + items.join(SYSEX_SEP) + SYSEX_EOX;
+        },
+
+        displlayMessage: function(grid, text) {
+            var t = text ? utils.encode(text.substr(0, MAX_CHARS)) : '';
+            while(t.length < MAX_CHARS * 3) { t += '20 ';}
+            return SYSEX_HEADER + utils.hex(Math.min(grid,3)*28) + t + SYSEX_EOX;
+        },
+
+        // string to 7bit encodeed hex string
+        encode: function(s) {
+            var c,str = '', i = 0;
+            if (s && s.length) {
+                for (; i < s.length; i++) {
+                    c = s.charCodeAt(i);
+                    // none ascii char to underscore
+                    str += c > 0x7F ? '5f ' : utils.hex(c);
+                }
+            }
+            return str;
+        },
+
+        hex: function(c) {
+            return (c < 0x10 ? ('0' + c.toString(16)) : c.toString(16)) + ' ';
+        }
+    };
+
+
+    // export
+    root.KompleteKontrol || (root.KompleteKontrol = {});
+    root.KompleteKontrol.utils = utils;
+}(this, host, _));
+
+(function(root, Bitwig, _) {
+    'use strict';
+
+    // imports
+    var utils = root.KompleteKontrol.utils;
+
     // switch element
     var SID_START = 86,
         SID_TRANSPORT_LOOP = 86,
@@ -1582,7 +1630,10 @@
 
 (function(root, Bitwig, _) {
     'use strict';
+    // imports
+    var utils = root.KompleteKontrol.utils;
 
+    // constants
     var MAX_CHARS = 28,
         SID_START = 20,
         SID_NAV_LEFT = 20,
@@ -1594,13 +1645,21 @@
         SYSEX_SEP = '19 ',
         SYSEX_EOX = 'f7';
 
+    // constructor
     var FocusController = function(midiOut, cursorTrack, cursorDevice) {
+        // instance variables
         this.midiOut = midiOut;
         this.track = cursorTrack;
         this.device = cursorDevice;
-        this.status = {};
+        this.status = {
+            track: undefined,   // current selected track name
+            device: undefined,  // current selected device name
+            id: undefined,      // Komplete Kontrol device id
+            hasChanged: false
+        };
         this.elements = [];
         this.elements.length = SID_END - SID_START + 1;
+        // initialize
         this.initialize();
     };
 
@@ -1645,15 +1704,7 @@
         },
 
         flush: function() {
-            var status = this.status;
-            if(status.hasChanged) {
-                // root.println('## flush track:[' + status.track + 
-                //              '] position:[' + status.trackPosition + 
-                //              '] device:[' + status.device + 
-                //              '] id:[' + status.id + ']');
-                this.midiOut.sendSysex(this.createStatuExMsg());
-                status.hasChanged = false;
-            }
+            this.sendStatus();
         },
 
         exit: function() {
@@ -1664,57 +1715,37 @@
         },
 
         onMidiCC: function(d1, d2) {
-            var btn = (d1 >= SID_START && d1 <= SID_END) ? this.elements[d1 - SID_START] : undefined,
-                on = d2 !== 0;
-            btn && (on ? (btn.on && btn.on.call(this)) : (btn.off && btn.off.call(this)));
+            var btn = (d1 >= SID_START && d1 <= SID_END) ? this.elements[d1 - SID_START] : undefined;
+            btn && (d2 !== 0 ? (btn.on && btn.on.call(this)) : (btn.off && btn.off.call(this)));
         },
-
 
         createElement: function(cc, button) {
             this.elements[cc - SID_START] = button;
         },
 
-        // this ex message only work in Ableton Live. why ?
-        // NI guys must have open mind.
-        createStatuExMsg: function() {
-            var exmsg = SYSEX_HEADER + '00 ',
-                status = this.status;
-            // add track name
-            exmsg += encode(status.track);
-            // add track position
-            exmsg += SYSEX_SEP;
-            exmsg += encode(status.trackPosition.toString());
-            // add device name
-            if (status.device && status.device.length > 0) {
-                exmsg += SYSEX_SEP;
-                exmsg += encode(status.device);
-                // add komplete kontrol instance id.
-                if (status.id) {
-                    exmsg += SYSEX_SEP;
-                    exmsg += encode(status.id);
+        sendStatus: function() {
+            var status = this.status;
+            if(status.hasChanged) {
+                var d = [];
+                root.println('## flush track:[' + status.track + 
+                             '] position:[' + status.trackPosition + 
+                             '] device:[' + status.device + 
+                             '] id:[' + status.id + ']');
+                d.push(status.track);
+                d.push(status.trackPosition.toString());
+                // add device name
+                if (status.device && status.device.length > 0) {
+                    d.push(status.device);
+                    // add komplete kontrol instance id.
+                    if (status.id) {
+                        d.push(status.id);
+                    }
                 }
+                this.midiOut.sendSysex(utils.statusMessage(d));
+                status.hasChanged = false;
             }
-            exmsg += SYSEX_EOX;
-            // root.println('## ex:[' + exmsg + ']');
-            return exmsg;
         }
     };
-
-    // string to 7bit encodeed hex string
-    function encode(s) {
-        var c,str = '';
-        if (s) {
-            for (var i = 0; i < s.length; i++) {
-                c = s.charCodeAt(i);
-                // none ascii char to underscore
-                c > 0x7F && (c = 0x5F);
-                str += c > 0x0f ? c.toString(16) : ('0' + c.toString(16));
-                str += ' ';
-            }
-        }
-        return str;
-    }
-
     // export
     root.KompleteKontrol || (root.KompleteKontrol = {});
     root.KompleteKontrol.FocusController = FocusController;
@@ -1722,7 +1753,9 @@
 
 (function(root, Bitwig, _) {
     'use strict';
-
+    // imports
+    var utils = root.KompleteKontrol.utils;
+    
     // constants
     var LOWEST_CC = 1,
         ENCODER_START_CC = 14,
@@ -1767,8 +1800,7 @@
 
         onMidiCC: function(d1, d2) {
             var elements = this.elements,
-                index = d1 - LOWEST_CC,
-                inRange = index >= 0 && index < elements.length;
+                index = d1 - LOWEST_CC;
             index >= 0 && index < elements.length && elements[index].set(d2, 128); 
         },
 
@@ -1789,13 +1821,7 @@
 
     // imports
     var NoteExpression = root.NoteExpression;
-
-    // constants
-    var LOWEST_CC = 1,
-        HIGHEST_CC = 119,
-        DEVICE_START_CC = 14,
-        DEVICE_END_CC = 21;
-
+    // variables
     var controllers;
 
     Bitwig.defineController(

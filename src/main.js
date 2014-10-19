@@ -3,13 +3,7 @@
 
     // imports
     var NoteExpression = root.NoteExpression;
-
-    // constants
-    var LOWEST_CC = 1,
-        HIGHEST_CC = 119,
-        DEVICE_START_CC = 14,
-        DEVICE_END_CC = 21;
-
+    // variables
     var controllers;
 
     Bitwig.defineController(

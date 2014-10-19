@@ -21,6 +21,7 @@ module.exports = function (grunt) {
                 src: [
                     'node_modules/underscore/underscore.js',
                     'src/directive.js',
+                    'src/utils.js',
                     'src/transport-controller.js',
                     'src/focus-controller.js',
                     'src/device-controller.js',
